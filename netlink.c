@@ -37,7 +37,6 @@ int main() {
     struct iovec iov[2];
     int ret = 0;
 
-    //For the filter
     struct rtattr rta;
     void *filter_mem = NULL;
     int filter_len = 0;
