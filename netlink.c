@@ -89,7 +89,6 @@ int main() {
 		len = recv(sockfd, rbuf, sizeof(rbuf), 0);	
 		nlh = (struct nlmsghdr*)rbuf;
     
-    	//for(nlh=(struct nlmsghdr *)rbuf;NLMSG_OK(nlh, len);nlh=NLMSG_NEXT(nlh, len)){
 		while(NLMSG_OK(nlh, len)){
 			if(nlh->nlmsg_type == NLMSG_DONE)
 				return(0);
@@ -98,19 +97,8 @@ int main() {
 				fprintf(stderr, "Error in netlink message\n");
  				return(-1);
 			}
-    	  //if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
-    	   // continue;
-    	  //diag_msg = (struct inet_diag_msg *)((char *)nlh + sizeof(struct nlmsghdr));
 			diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
 			rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
-    	  /* if(nlh->nlmsg_type == NLMSG_ERROR){
-    	    fprintf(stderr,"netlink msg error\n");
-    	    return(-1);
-    	  }
-    	  if(nlh->nlmsg_type == NLMSG_DONE){
-    	    return(0);
-    	  } */
-
 		  
 			if(rtalen > 0){
 				attr = (struct rtattr*) (diag_msg+1);
