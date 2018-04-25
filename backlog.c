@@ -91,7 +91,7 @@ int main() {
     	    	continue;
 			diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
 
-			inet_ntop(AF_INET, (struct in_addr*) &(diag_msg->id.idiag_src), local_addr_buf, INET_ADDRSTRLEN);
+			//inet_ntop(AF_INET, (struct in_addr*) &(diag_msg->id.idiag_src), local_addr_buf, INET_ADDRSTRLEN);
 
 			//fprintf(stdout, "%d\n", htons(diag_msg->id.idiag_sport)); 
 
