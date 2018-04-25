@@ -97,7 +97,7 @@ int main() {
 
 			inet_ntop(AF_INET, (struct in_addr*) &(diag_msg->id.idiag_src), local_addr_buf, INET_ADDRSTRLEN);
 
-			/* fprintf(stdout, "%d\n", ntohs(diag_msg->id.idiag_sport)); */
+			/* fprintf(stdout, "%d\n", htons(diag_msg->id.idiag_sport)); */
 
 			rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
 
