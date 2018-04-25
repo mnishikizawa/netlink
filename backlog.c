@@ -67,7 +67,7 @@ int main() {
     wbuf.req.idiag_states = TCPF_ALL & 
         ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE));
     wbuf.req.idiag_ext |= (1 << (INET_DIAG_INFO - 1));
-	wbuf.req.id.idiag_sport = htons(8000);
+    wbuf.req.id.idiag_sport = htons(8000);
     wbuf.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(wbuf.req));
     wbuf.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
     wbuf.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
