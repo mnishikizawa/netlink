@@ -8,7 +8,6 @@
 #include <linux/tcp.h>
 #include <linux/sock_diag.h>
 #include <linux/inet_diag.h>
-
 #include <arpa/inet.h>
 
 enum{
@@ -38,11 +37,6 @@ int main() {
     struct sockaddr_nl sa;
     struct iovec iov[2];
     int ret = 0;
-
-    struct rtattr rta;
-    void *filter_mem = NULL;
-    int filter_len = 0;
-
     static char rbuf[65535];
 	struct rtattr *attr;
 	struct tcp_info *info;
@@ -65,7 +59,7 @@ int main() {
     wbuf.req.sdiag_family = AF_INET;
     wbuf.req.sdiag_protocol = IPPROTO_TCP;
     wbuf.req.idiag_states = TCPF_ALL & 
-        ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE));
+       ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE)) | (1<<TCP_ESTABLISHED);
     wbuf.req.idiag_ext |= (1 << (INET_DIAG_INFO - 1));
 	wbuf.req.id.idiag_sport = htons(8000);
     wbuf.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(wbuf.req));
