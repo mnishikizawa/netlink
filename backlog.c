@@ -59,9 +59,10 @@ int main() {
     wbuf.req.sdiag_family = AF_INET;
     wbuf.req.sdiag_protocol = IPPROTO_TCP;
     wbuf.req.idiag_states = TCPF_ALL & 
-       ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE)) | (1<<TCP_ESTABLISHED);
+       ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE) | (1<<TCP_CLOSE_WAIT) | (1<<TCP_ESTABLISHED));
+       //~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE) | (1<<TCP_ESTABLISHED) | (1<<TCP_CLOSE_WAIT));
     wbuf.req.idiag_ext |= (1 << (INET_DIAG_INFO - 1));
-    wbuf.req.id.idiag_sport = htons(8000);
+	wbuf.req.id.idiag_sport = htons(8000);
     wbuf.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(wbuf.req));
     wbuf.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
     wbuf.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
@@ -91,7 +92,7 @@ int main() {
 
 			inet_ntop(AF_INET, (struct in_addr*) &(diag_msg->id.idiag_src), local_addr_buf, INET_ADDRSTRLEN);
 
-			/* fprintf(stdout, "%d\n", htons(diag_msg->id.idiag_sport)); */
+			//fprintf(stdout, "%d\n", htons(diag_msg->id.idiag_sport)); 
 
 			rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
 
