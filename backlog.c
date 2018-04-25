@@ -9,7 +9,9 @@
 #include <linux/sock_diag.h>
 #include <linux/inet_diag.h>
 #include <arpa/inet.h>
+#include <time.h>
 
+#define METRIC_NAME "nginx.backlog"
 enum{
     TCP_ESTABLISHED = 1,
     TCP_SYN_SENT,
@@ -60,7 +62,6 @@ int main() {
     wbuf.req.sdiag_protocol = IPPROTO_TCP;
     wbuf.req.idiag_states = TCPF_ALL & 
        ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE) | (1<<TCP_CLOSE_WAIT) | (1<<TCP_ESTABLISHED));
-       //~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE) | (1<<TCP_ESTABLISHED) | (1<<TCP_CLOSE_WAIT));
     wbuf.req.idiag_ext |= (1 << (INET_DIAG_INFO - 1));
 	wbuf.req.id.idiag_sport = htons(8000);
     wbuf.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(wbuf.req));
@@ -110,15 +111,10 @@ int main() {
 				while(RTA_OK(attr, rtalen)){
 					if(attr->rta_type == INET_DIAG_INFO){	
 						info = (struct tcp_info*) RTA_DATA(attr);
-						fprintf(stdout, "State: %u RTT: %gms Recv.RTT: %gms cwnd: %u lastsnd: %u lastrcv: %u lastack: %u unacked: %u\n", 
-								info->tcpi_state, 
-								(double) info->tcpi_rtt/1000,
-								(double) info->tcpi_rcv_rtt/1000, 
-								info->tcpi_snd_cwnd,
-								info->tcpi_last_data_sent,
-								info->tcpi_last_data_recv,
-								info->tcpi_last_ack_recv,
-								info->tcpi_unacked);
+						fprintf(stdout, "%s\t%u\t%d\n", 
+								METRIC_NAME,
+								info->tcpi_unacked,
+								time(NULL));
 						}
 						attr = RTA_NEXT(attr, rtalen);
 				}
