@@ -9,6 +9,8 @@
 #include <linux/sock_diag.h>
 #include <linux/inet_diag.h>
 
+#include <arpa/inet.h>
+
 enum{
     TCP_ESTABLISHED = 1,
     TCP_SYN_SENT,
@@ -46,6 +48,7 @@ int main() {
 	struct tcp_info *info;
     struct inet_diag_msg *diag_msg;
 	int rtalen;
+	char local_addr_buf[INET6_ADDRSTRLEN];
 
     if((sockfd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_INET_DIAG)) == -1){
 		perror("socket: ");
@@ -55,7 +58,7 @@ int main() {
     memset(&msg, 0, sizeof(msg));
     memset(&sa, 0, sizeof(sa));
     memset(&wbuf.nlh, 0, sizeof(wbuf.nlh));
-    memset(&wbuf.req, 0, sizeof(wbuf.req)); //これがないとrtalenが-になるな
+    memset(&wbuf.req, 0, sizeof(wbuf.req));
 
     sa.nl_family = AF_NETLINK;
 
@@ -64,7 +67,7 @@ int main() {
     wbuf.req.idiag_states = TCPF_ALL & 
         ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE));
     wbuf.req.idiag_ext |= (1 << (INET_DIAG_INFO - 1));
-    
+	wbuf.req.id.idiag_sport = htons(8000);
     wbuf.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(wbuf.req));
     wbuf.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
     wbuf.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
@@ -90,9 +93,14 @@ int main() {
 		for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
 			if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
     	    	continue;
-    	  //diag_msg = (struct inet_diag_msg *)((char *)nlh + sizeof(struct nlmsghdr));
 			diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
+
+			inet_ntop(AF_INET, (struct in_addr*) &(diag_msg->id.idiag_src), local_addr_buf, INET_ADDRSTRLEN);
+
+			/* fprintf(stdout, "%d\n", ntohs(diag_msg->id.idiag_sport)); */
+
 			rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
+
 
 			if(nlh->nlmsg_type == NLMSG_ERROR){
 				fprintf(stderr,"netlink msg error\n");
@@ -107,11 +115,15 @@ int main() {
 				while(RTA_OK(attr, rtalen)){
 					if(attr->rta_type == INET_DIAG_INFO){	
 						info = (struct tcp_info*) RTA_DATA(attr);
-						fprintf(stdout, "State: %u RTT: %gms Recv.RTT: %gms cwnd: %u\n", 
+						fprintf(stdout, "State: %u RTT: %gms Recv.RTT: %gms cwnd: %u lastsnd: %u lastrcv: %u lastack: %u unacked: %u\n", 
 								info->tcpi_state, 
 								(double) info->tcpi_rtt/1000,
 								(double) info->tcpi_rcv_rtt/1000, 
-								info->tcpi_snd_cwnd);
+								info->tcpi_snd_cwnd,
+								info->tcpi_last_data_sent,
+								info->tcpi_last_data_recv,
+								info->tcpi_last_ack_recv,
+								info->tcpi_unacked);
 						}
 						attr = RTA_NEXT(attr, rtalen);
 				}
