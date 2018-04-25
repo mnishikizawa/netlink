@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 
+#define TCPF_ALL 0xFFF
 #define METRIC_NAME "nginx.backlog"
 enum{
     TCP_ESTABLISHED = 1,
@@ -25,8 +26,6 @@ enum{
     TCP_LISTEN,
     TCP_CLOSING 
 };
-
-#define TCPF_ALL 0xFFF
 
 int main() {
     int sockfd, len;
@@ -90,13 +89,7 @@ int main() {
 			if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
     	    	continue;
 			diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
-
-			//inet_ntop(AF_INET, (struct in_addr*) &(diag_msg->id.idiag_src), local_addr_buf, INET_ADDRSTRLEN);
-
-			//fprintf(stdout, "%d\n", htons(diag_msg->id.idiag_sport)); 
-
 			rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
-
 
 			if(nlh->nlmsg_type == NLMSG_ERROR){
 				fprintf(stderr,"netlink msg error\n");
@@ -118,7 +111,7 @@ int main() {
 						}
 						attr = RTA_NEXT(attr, rtalen);
 				}
-            }
+			}
 		}
 	} 
 	return(0);
