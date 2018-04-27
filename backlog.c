@@ -24,13 +24,14 @@ enum{
     TCP_CLOSE_WAIT,
     TCP_LAST_ACK,
     TCP_LISTEN,
-    TCP_CLOSING 
+    TCP_CLOSING
 };
 
 int main() {
+    static const char metric_name[] = "nginx.backlog";
     int sockfd, len;
     struct msghdr msg;
-    struct { 
+    struct {
         struct nlmsghdr nlh;
         struct inet_diag_req_v2 req;
     } wbuf;
@@ -76,7 +77,7 @@ int main() {
     msg.msg_namelen = sizeof(sa);
     msg.msg_iov = iov;
     msg.msg_iovlen = 2;
-   
+
     if((ret = sendmsg(sockfd, &msg, 0)) == -1){
 		perror("sendmsg:");
 		return(-1);
@@ -84,7 +85,7 @@ int main() {
 
 	while(1){
 		len = recv(sockfd, rbuf, sizeof(rbuf), 0);	
-    
+
 		for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
 			if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
     	    	continue;
@@ -104,8 +105,8 @@ int main() {
 				while(RTA_OK(attr, rtalen)){
 					if(attr->rta_type == INET_DIAG_INFO){	
 						info = (struct tcp_info*) RTA_DATA(attr);
-						fprintf(stdout, "%s\t%u\t%d\n", 
-								METRIC_NAME,
+						fprintf(stdout, "%s\t%u\t%d\n",
+								metric_name,
 								info->tcpi_unacked,
 								time(NULL));
 						}
