@@ -40,16 +40,16 @@ int main() {
     struct iovec iov[2];
     int ret = 0;
     static char rbuf[65535];
-	struct rtattr *attr;
-	struct tcp_info *info;
+    struct rtattr *attr;
+    struct tcp_info *info;
     struct inet_diag_msg *diag_msg;
-	int rtalen;
-	char local_addr_buf[INET6_ADDRSTRLEN];
+    int rtalen;
+    char local_addr_buf[INET6_ADDRSTRLEN];
 
     if((sockfd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_INET_DIAG)) == -1){
-		perror("socket: ");
-		return(-1);
-	}
+        perror("socket ");
+        return(-1);
+    }
 
     memset(&msg, 0, sizeof(msg));
     memset(&sa, 0, sizeof(sa));
@@ -60,10 +60,10 @@ int main() {
 
     wbuf.req.sdiag_family = AF_INET;
     wbuf.req.sdiag_protocol = IPPROTO_TCP;
-    wbuf.req.idiag_states = TCPF_ALL & 
+    wbuf.req.idiag_states = TCPF_ALL &
        ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE) | (1<<TCP_CLOSE_WAIT) | (1<<TCP_ESTABLISHED));
     wbuf.req.idiag_ext |= (1 << (INET_DIAG_INFO - 1));
-	wbuf.req.id.idiag_sport = htons(8000);
+    wbuf.req.id.idiag_sport = htons(8000);
     wbuf.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(wbuf.req));
     wbuf.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
     wbuf.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
@@ -79,42 +79,42 @@ int main() {
     msg.msg_iovlen = 2;
 
     if((ret = sendmsg(sockfd, &msg, 0)) == -1){
-		perror("sendmsg:");
-		return(-1);
-	}
+      perror("sendmsg ");
+      return(-1);
+    }
 
-	while(1){
-		len = recv(sockfd, rbuf, sizeof(rbuf), 0);	
+    while(1){
+    len = recv(sockfd, rbuf, sizeof(rbuf), 0);
 
-		for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
-			if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
-    	    	continue;
-			diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
-			rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
+      for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
+        if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
+            continue;
+        diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
+        rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
 
-			if(nlh->nlmsg_type == NLMSG_ERROR){
-				fprintf(stderr,"netlink msg error\n");
-				return(-1);
-			}
-			if(nlh->nlmsg_type == NLMSG_DONE){
-				return(0);
-			}
+        if(nlh->nlmsg_type == NLMSG_ERROR){
+          fprintf(stderr,"netlink msg error\n");
+          return(-1);
+        }
+        if(nlh->nlmsg_type == NLMSG_DONE){
+          return(0);
+        }
 
-			if(rtalen > 0){
-				attr = (struct rtattr*) (diag_msg+1);
-				while(RTA_OK(attr, rtalen)){
-					if(attr->rta_type == INET_DIAG_INFO){	
-						info = (struct tcp_info*) RTA_DATA(attr);
-						fprintf(stdout, "%s\t%u\t%d\n",
-								metric_name,
-								info->tcpi_unacked,
-								time(NULL));
-						}
-						attr = RTA_NEXT(attr, rtalen);
-				}
-			}
-		}
-	} 
-	return(0);
+        if(rtalen > 0){
+          attr = (struct rtattr*) (diag_msg+1);
+          while(RTA_OK(attr, rtalen)){
+            if(attr->rta_type == INET_DIAG_INFO){	
+                info = (struct tcp_info*) RTA_DATA(attr);
+                fprintf(stdout, "%s\t%u\t%d\n",
+                        metric_name,
+                        info->tcpi_unacked,
+                        time(NULL));
+            }
+            attr = RTA_NEXT(attr, rtalen);
+          }
+        }
+      }
+    }
+    return(0);
 }
 
