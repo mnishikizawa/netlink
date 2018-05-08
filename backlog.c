@@ -103,35 +103,35 @@ int main(int argc, char **argv) {
     while(1){
     len = recv(sockfd, rbuf, sizeof(rbuf), 0);
 
-      for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
-        if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
-            continue;
-        diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
-        rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
+    for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
+      if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
+          continue;
+      diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
+      rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
 
-        if(nlh->nlmsg_type == NLMSG_ERROR){
-          fprintf(stderr,"netlink msg error\n");
-          return(-1);
-        }
-        if(nlh->nlmsg_type == NLMSG_DONE){
-          return(0);
-        }
+      if(nlh->nlmsg_type == NLMSG_ERROR){
+        fprintf(stderr,"netlink msg error\n");
+        return(-1);
+      }
+      if(nlh->nlmsg_type == NLMSG_DONE){
+        return(0);
+      }
 
-        if(rtalen > 0){
-          attr = (struct rtattr*) (diag_msg+1);
-          while(RTA_OK(attr, rtalen)){
-            if(attr->rta_type == INET_DIAG_INFO){
-                info = (struct tcp_info*) RTA_DATA(attr);
-                fprintf(stdout, "%s\t%u\t%d\n",
-                        metric_name,
-                        info->tcpi_unacked,
-                        time(NULL));
-            }
-            attr = RTA_NEXT(attr, rtalen);
-            }
+      if(rtalen > 0){
+        attr = (struct rtattr*) (diag_msg+1);
+        while(RTA_OK(attr, rtalen)){
+          if(attr->rta_type == INET_DIAG_INFO){
+              info = (struct tcp_info*) RTA_DATA(attr);
+              fprintf(stdout, "%s\t%u\t%d\n",
+                      metric_name,
+                      info->tcpi_unacked,
+                      time(NULL));
+          }
+          attr = RTA_NEXT(attr, rtalen);
           }
         }
       }
+    }
     return(0);
     }
 }
