@@ -27,9 +27,9 @@ enum{
     TCP_CLOSING
 };
 
-int main() {
+int main(int argc, char **argv) {
     static const char metric_name[] = "nginx.backlog";
-    int sockfd, len;
+    int port, sockfd, len;
     struct msghdr msg;
     struct {
         struct nlmsghdr nlh;
@@ -46,9 +46,28 @@ int main() {
     int rtalen;
     char local_addr_buf[INET6_ADDRSTRLEN];
 
+    if (argc !=3) {
+        fprintf(stderr, "Usage: ./hoge -l <listen port>\n");
+    }
+
+    while (2 < argc) {
+        if (argv[1][0] != '-') {
+            fprintf(stderr, "Usage: ./hoge -l <listen port>\n");
+            break;
+        }
+        if (strcmp(argv[1], "-l") == 0) {
+            port = atoi(argv[2]);
+            printf("port: %d\n", port);
+            argc--;
+        }
+        else {
+            fprintf(stderr, "Unknown option: %s\n", argv[1]);
+            return(-1);
+        }
+
     if((sockfd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_INET_DIAG)) == -1){
-        perror("socket ");
-        return(-1);
+       perror("socket ");
+       return(-1);
     }
 
     memset(&msg, 0, sizeof(msg));
@@ -63,7 +82,7 @@ int main() {
     wbuf.req.idiag_states = TCPF_ALL &
        ~((1<<TCP_SYN_RECV) | (1<<TCP_TIME_WAIT) | (1<<TCP_CLOSE) | (1<<TCP_CLOSE_WAIT) | (1<<TCP_ESTABLISHED));
     wbuf.req.idiag_ext |= (1 << (INET_DIAG_INFO - 1));
-    wbuf.req.id.idiag_sport = htons(8000);
+    wbuf.req.id.idiag_sport = htons(port);
     wbuf.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(wbuf.req));
     wbuf.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
     wbuf.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
@@ -77,9 +96,7 @@ int main() {
     msg.msg_namelen = sizeof(sa);
     msg.msg_iov = iov;
     msg.msg_iovlen = 2;
-
-    if((ret = sendmsg(sockfd, &msg, 0)) == -1){
-      perror("sendmsg ");
+    if((ret = sendmsg(sockfd, &msg, 0)) == -1){ perror("sendmsg ");
       return(-1);
     }
 
@@ -103,7 +120,7 @@ int main() {
         if(rtalen > 0){
           attr = (struct rtattr*) (diag_msg+1);
           while(RTA_OK(attr, rtalen)){
-            if(attr->rta_type == INET_DIAG_INFO){	
+            if(attr->rta_type == INET_DIAG_INFO){
                 info = (struct tcp_info*) RTA_DATA(attr);
                 fprintf(stdout, "%s\t%u\t%d\n",
                         metric_name,
@@ -111,10 +128,11 @@ int main() {
                         time(NULL));
             }
             attr = RTA_NEXT(attr, rtalen);
+            }
           }
         }
       }
-    }
     return(0);
+    }
 }
 
