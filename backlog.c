@@ -12,7 +12,6 @@
 #include <time.h>
 
 #define TCPF_ALL 0xFFF
-#define METRIC_NAME "nginx.backlog"
 enum{
     TCP_ESTABLISHED = 1,
     TCP_SYN_SENT,
@@ -28,7 +27,7 @@ enum{
 };
 
 int main(int argc, char **argv) {
-    static const char metric_name[] = "nginx.backlog";
+    static const char metric_name[] = "nginx.backlog_count";
     int port, sockfd, len;
     struct msghdr msg;
     struct {
@@ -57,7 +56,6 @@ int main(int argc, char **argv) {
         }
         if (strcmp(argv[1], "-l") == 0) {
             port = atoi(argv[2]);
-            printf("port: %d\n", port);
             argc--;
         }
         else {
