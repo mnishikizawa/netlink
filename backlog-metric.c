@@ -57,7 +57,6 @@ int main(int argc, char **argv) {
         }
         if (strcmp(argv[1], "-l") == 0) {
             port = atoi(argv[2]);
-            printf("port: %d\n", port);
             argc--;
         }
         else {
