@@ -27,7 +27,7 @@ enum{
 };
 
 int main(int argc, char **argv) {
-    static const char metric_name[] = "nginx.backlog_count";
+    static const char metric_name[] = "nginx.backlog";
     int port, sockfd, len;
     struct msghdr msg;
     struct {
@@ -46,26 +46,28 @@ int main(int argc, char **argv) {
     char local_addr_buf[INET6_ADDRSTRLEN];
 
     if (argc !=3) {
-        fprintf(stderr, "Usage: ./hoge -l <listen port>\n");
+        fprintf(stderr, "Usage: %s -l <listen port>\n", argv[0]);
     }
 
     while (2 < argc) {
         if (argv[1][0] != '-') {
-            fprintf(stderr, "Usage: ./hoge -l <listen port>\n");
+            fprintf(stderr, "Usage: %s -l <listen port>\n", argv[0]);
             break;
         }
         if (strcmp(argv[1], "-l") == 0) {
             port = atoi(argv[2]);
+            printf("port: %d\n", port);
             argc--;
         }
         else {
             fprintf(stderr, "Unknown option: %s\n", argv[1]);
             return(-1);
         }
+    }
 
     if((sockfd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_INET_DIAG)) == -1){
-       perror("socket ");
-       return(-1);
+        perror("socket ");
+        return(-1);
     }
 
     memset(&msg, 0, sizeof(msg));
@@ -94,43 +96,43 @@ int main(int argc, char **argv) {
     msg.msg_namelen = sizeof(sa);
     msg.msg_iov = iov;
     msg.msg_iovlen = 2;
-    if((ret = sendmsg(sockfd, &msg, 0)) == -1){ perror("sendmsg ");
+    if((ret = sendmsg(sockfd, &msg, 0)) == -1){
+      perror("sendmsg ");
       return(-1);
     }
 
     while(1){
     len = recv(sockfd, rbuf, sizeof(rbuf), 0);
 
-    for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
-      if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
-          continue;
-      diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
-      rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
+      for(nlh=(struct nlmsghdr *)rbuf; NLMSG_OK(nlh, len); nlh=NLMSG_NEXT(nlh, len)){
+        if(nlh->nlmsg_seq != wbuf.nlh.nlmsg_seq)
+            continue;
+        diag_msg = (struct inet_diag_msg *) NLMSG_DATA(nlh);
+        rtalen = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*diag_msg));
 
-      if(nlh->nlmsg_type == NLMSG_ERROR){
-        fprintf(stderr,"netlink msg error\n");
-        return(-1);
-      }
-      if(nlh->nlmsg_type == NLMSG_DONE){
-        return(0);
-      }
+        if(nlh->nlmsg_type == NLMSG_ERROR){
+          fprintf(stderr,"netlink msg error\n");
+          return(-1);
+        }
+        if(nlh->nlmsg_type == NLMSG_DONE){
+          return(0);
+        }
 
-      if(rtalen > 0){
-        attr = (struct rtattr*) (diag_msg+1);
-        while(RTA_OK(attr, rtalen)){
-          if(attr->rta_type == INET_DIAG_INFO){
-              info = (struct tcp_info*) RTA_DATA(attr);
-              fprintf(stdout, "%s\t%u\t%d\n",
-                      metric_name,
-                      info->tcpi_unacked,
-                      time(NULL));
-          }
-          attr = RTA_NEXT(attr, rtalen);
+        if(rtalen > 0){
+          attr = (struct rtattr*) (diag_msg+1);
+          while(RTA_OK(attr, rtalen)){
+            if(attr->rta_type == INET_DIAG_INFO){
+                info = (struct tcp_info*) RTA_DATA(attr);
+                fprintf(stdout, "%s\t%u\t%d\n",
+                        metric_name,
+                        info->tcpi_unacked,
+                        time(NULL));
+            }
+            attr = RTA_NEXT(attr, rtalen);
           }
         }
       }
     }
     return(0);
-    }
 }
 
