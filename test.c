@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
           return(0);
         }
 
-		printf("state=%02d sport=%05d dport=%05d\n", diag_msg->idiag_state, ntohs(diag_msg->id.idiag_sport), ntohs(diag_msg->id.idiag_dport));
+    printf("state=%02d sport=%05d dport=%05d\n", diag_msg->idiag_state, ntohs(diag_msg->id.idiag_sport), ntohs(diag_msg->id.idiag_dport));
 
         if(rtalen > 0){
           attr = (struct rtattr*) (diag_msg+1);
