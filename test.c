@@ -37,13 +37,13 @@ enum {
 void usage()
 {
     fprintf(
-		    stderr,
-				"Usage: backlog-metric [OPTIONS]\n"
-				"   -l Port  listen port number\n"
-				"   -4       IP version 4 sockets\n"
-				"   -6       IP version 6 sockets\n"
-				);
-		    exit(2);
+      stderr,
+        "Usage: backlog-metric [OPTIONS]\n"
+        "   -l Port  listen port number\n"
+        "   -4       IP version 4 sockets\n"
+        "   -6       IP version 6 sockets\n"
+        );
+      exit(2);
 }
 
 int main(int argc, char **argv) {
@@ -69,28 +69,28 @@ int main(int argc, char **argv) {
         usage();
     }
 
-	while((r=getopt(argc,argv,"h46l:")) != -1){
-	  switch(r){
-		case '4':
-			proto = AF_INET;
-			break;
+    while((r=getopt(argc,argv,"h46l:")) != -1){
+      switch(r){
+        case '4':
+          proto = AF_INET;
+          break;
 
-		case '6':
-			proto = AF_INET6;
-			break;
+        case '6':
+          proto = AF_INET6;
+          break;
 
-		case 'l':
-			port = atoi(optarg);
-			break;
+        case 'l':
+          port = atoi(optarg);
+          break;
 
         case 'h':
-            usage();
+          usage();
 
-		case '?':
-            usage();
-		}
-	}
-		
+        case '?':
+          usage();
+      }
+    }
+
     if((sockfd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_INET_DIAG)) == -1){
         perror("socket ");
         return(-1);
