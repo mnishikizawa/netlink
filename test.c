@@ -1,7 +1,7 @@
 /*		
 * backlogのカウントをmackerelのメトリックスに投稿する		
 *		
-* Usage: ./backlog-metric -l <listen port>		
+* Usage: ./backlog-metric -l <listen port> -4(ipv4) or -6(ipv6)
 *		
 */
 
